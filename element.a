@@ -185,7 +185,7 @@ element_print:
 element_sa_ptr:   .word 0
 
 # Name for element stack_array instance.
-element_str:       .asciz  "Links"
+element_str:       .asciz  "Element"
 
 # ID to help identify a element instance.
 # A strange prime number is used for less probability of matching a random value.

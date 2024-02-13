@@ -19,7 +19,7 @@ Stack_Array addr: 4c0
 Stack addr: 4c0
 Array addr: 4f8
 
-Stack Name: Links
+Stack Name: Element
 Max Items: 5
 Number Items: 5
 0x5a4
