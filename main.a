@@ -1,0 +1,63 @@
+
+.text
+
+	# Word sizes. # Change if a word is not 32 bits, 4 bytes.
+	.equ w1, 4
+
+# External labels:
+	.extern mem_init
+
+        .extern link_init
+        .extern link_new
+        .extern link_stack_print
+        .extern link_print
+
+	.extern element_init
+	.extern element_new
+	.extern element_dealloc
+	.extern element_print
+	.extern element_stack_print
+
+_start:
+    # Init alloc-only memory bank.
+    jal mem_init
+
+    # Init links struct alloc/dealloc stack-array memory.
+    li a0, 10		# Load maximum number of items in use at any one time. 
+    jal link_init
+
+    # Init element struct alloc/dealloc stack-array memory.
+    li a0, 5		# Load maximum number of items in use at any one time. 
+    jal element_init
+
+after_init:
+    jal link_stack_print
+
+    jal element_stack_print
+
+    # Make a new element instance.
+    la a0, h_name
+    li a1, 1
+    jal element_new	# New element instance to a1.
+
+    # Print element instance.
+    mv a0, a1
+    jal element_print
+   
+    # New line.
+    la t0, cr
+    sout t0
+
+    # Make a new link instance.
+    li a0, 5
+    li a1, 7
+    jal link_new	# New link instance to a1.
+
+    # Print link instance.
+    mv a0, a1
+    jal link_print
+
+    halt
+
+cr: .asciz "\n"
+h_name: .asciz "Hydrogen"
