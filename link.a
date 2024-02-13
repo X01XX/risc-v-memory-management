@@ -1,0 +1,196 @@
+# Implement storage and methods for a link (as in linked list) struct.
+
+.text
+
+       # Word sizes. # Change if a word is not 32 bits, 4 bytes.
+        .equ w1, 4
+        .equ w2, 8
+        .equ w3, 12
+
+        .equ w1n, -4
+        .equ w3n, -12
+
+# struct_link:
+        .equ link_id, 	0
+        .equ link_next, w1
+        .equ link_val,  w2
+        .equ link_words,  3
+
+# External labels:
+        .extern mem_init
+        .extern mem_alloc
+
+        .extern stack_array_new
+        .extern stack_array_alloc
+        .extern stack_array_dealloc
+        .extern stack_array_print
+
+# Global labels:
+	.global link_init
+	.global link_new
+	.global link_dealloc
+	.global link_stack_print
+	.global link_print
+
+# Initialize link storage.
+# In: a0 contains the number of items to allow for.
+link_init:
+    # Adjust stack ptr and save registers.
+    addi sp, sp, w1n
+    sw ra, 0(sp)                # Save ra an stack.
+
+    li a1, link_words   # Load number words per item.
+    la a2, link_str     # Load stack_array decription ptr.
+    jal stack_array_new # sa struct adr to a1
+
+    # Save link sa ptr.
+    la t0, link_sa_ptr
+    sw a1, 0(t0)
+
+    # Restore stack.
+    lw ra, 0(sp)
+    addi sp, sp, w1             # Restore ra from stack.
+
+    ret
+
+# Return a new link.
+# In:  a0 = Link value.
+#      a1 = Link next.
+# Ret: Link instance ptr in a1.
+link_new:
+    # Adjust stack ptr and save registers.
+    addi sp, sp, w3n
+    sw ra, 0(sp)                # Save ra an stack.
+    sw s1, w1(sp)               # Save s1.
+    sw s2, w2(sp)               # Save s2.
+
+    # Save args.
+    mv s1, a0                   # Save link value to s1.
+    mv s2, a1                   # Save link next to s2.
+
+    # Allocate a new link instance, or stack empty.
+    la t0, link_sa_ptr
+    lw a0, 0(t0)		# Get link stack_array pointer.
+    jal stack_array_alloc	# Get a new item into a1, or stack empty.
+
+    # Load values to instance.
+    la t0, link_id_val
+    lw t0, 0(t0)		# Load the link id value.
+    sw t0, link_id(a1)		# Set link ID in returned instance.
+    sw s1, link_val(a1)		# Store link value prt.
+    sw s2, link_next(a1)	# Store link next prt.
+
+    # Restore stack.
+    lw s2, w2(sp)               # Restore s2.
+    lw s1, w1(sp)               # Restore s1.
+    lw ra, 0(sp)
+    addi sp, sp, w3             # Restore ra from stack.
+
+    ret
+
+# Deallocate a link.
+# In: a0 contains a pointer to a link instance.
+# Ret: Nothing.
+link_dealloc:
+    # Adjust stack ptr and save registers.
+    addi sp, sp, w1n
+    sw ra, 0(sp)                # Save ra an stack.
+
+    # Check instance ID.
+    lw t0, link_id(a0)		# Load instance ID.
+    la t1, link_id_val	
+    lw t1, 0(t1)		# Load expected ID.
+    bne t0, t1, lid_err		# Error if ne.
+
+    # Deallocate.
+    mv a1, a0			# Item ptr to a1.
+    la t0, link_sa_ptr
+    lw a0, 0(t0)		# Get link stack_array pointer.
+    jal stack_array_dealloc	# Add instance back to link stack.
+
+    # Restore stack.
+    lw ra, 0(sp)
+    addi sp, sp, w1             # Restore ra from stack.
+
+    ret
+
+lid_err:
+    la t0, lid_err_str
+    sout t0			# Print error string.
+
+    halt
+
+lid_err_str:      .asciz  "Invalid instance link id"
+
+# Print the link stack.
+# In:  Nothing.
+# Ret: Nothing.
+# Out: Prints info.
+link_stack_print:
+    # Adjust stack ptr and save registers.
+    addi sp, sp, w1n
+    sw ra, 0(sp)                # Save ra an stack.
+
+    la t0, link_sa_ptr
+    lw a0, 0(t0)		# Load link stack ptr.
+
+    jal stack_array_print	# Print the stack.
+   
+    # Restore stack.
+    lw ra, 0(sp)
+    addi sp, sp, w1             # Restore ra from stack.
+
+    ret
+
+# Print an link instance.
+# In:  a0 = ptr to an link instance.
+# Ret: Nothing.
+# Out: Prints info.
+link_print:
+    # Adjust stack ptr and save registers.
+    addi sp, sp, w1n
+    sw ra, 0(sp)                # Save ra an stack.
+
+    # Check instance ID.
+    lw t0, link_id(a0)       # Load instance ID.
+    la t1, link_id_val
+    lw t1, 0(t1)                # Load expected ID.
+    bne t0, t1, lid_err         # Error if ne.
+
+    li t0, '['
+    aout t0
+
+    la t0, lp_val_str
+    sout t0
+
+    lw t0, link_val(a0)
+    hout t0
+
+    la t0, lp_nxt_str
+    sout t0
+
+    lw t0, link_next(a0)
+    hout t0
+
+    li t0, ']'
+    aout t0
+
+    # Restore stack.
+    lw ra, 0(sp)
+    addi sp, sp, w1             # Restore ra from stack.
+
+    ret
+
+# Storage for link stack_array struct ptr.
+link_sa_ptr:   .word 0
+
+# Name for link stack_array instance.
+link_str:       .asciz  "Links"
+
+# ID to help identify a link instance.
+# A strange prime number is used for less probability of matching a random value.
+link_id_val:	.word 3571
+
+lp_val_str: .asciz "Value: 0x"
+lp_nxt_str: .asciz ", Next: 0x"
+

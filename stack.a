@@ -1,0 +1,300 @@
+# Implement a stack
+#
+# A stack will be a block of memory, consisting of:
+#
+# word 0: Stack start pointer, which points to the first word in the stack.
+# word 1: Stack end pointer, which points to the word nfter the last word in the stack.
+# word 2: Current top of stack pointer.
+# word 3: A pointer to a string that names the stack.
+
+.text
+
+	# Word sizes. Change if a word is not 32 bits, 4 bytes.
+	.equ w1, 4
+	.equ w2, 8
+	.equ w3, 12
+	.equ w4, 16
+	.equ w1n, -4
+	.equ w4n, -16
+
+	# Shift number bits to convert between words and bytes.
+	# Change if a word is not 32 bits, 4 bytes.
+	.equ sbts, 2
+
+#struct stack.
+	.equ	stack_start,	0	# Ptr to start of stack.
+	.equ	stack_end,	w1	# stack_start + (sbts * number items)
+	.equ	stack_tos,	w2	# Current Top Of Stack.
+	.equ	stack_desc,	w3	# Ptr to a non-empty string, with printable characters.
+	.equ    stack_words,	4	# Number words in this struct.
+
+
+	.extern mem_alloc		# Get memory from allocate-only memory store.
+
+	.global stack_new
+	.global stack_push
+	.global stack_pop
+	.global stack_print
+	.global stack_check_addr
+
+# Initialize and return a stack.
+# mem_init must be run before calling this.
+# In:  a0, contains the number of words the stack will need to support.
+#      a1, contains a ptr to a string that will name the stack for error messages.
+# Ret: a1, a ptr to the memory allocated for the stack (header).
+# Out: Invalid number of words message.
+stack_new:
+    blez a0, invalid_request 	# Check for zero, or negative, number of words.
+
+    # Adjust stack ptr and save registers.
+    addi sp, sp, w4n		# Init stack frame.
+    sw ra, 0(sp)		# Return address.
+    sw a0, w1(sp)		# Stack number words.
+    sw a1, w2(sp)		# Stack decription ptr.
+    #      w3(sp)		# Will be stack struct ptr.
+
+    jal check_name		# Check stack name is OK.
+
+    addi a0, x0, stack_words	# Load number of stack struct words.
+    jal mem_alloc		# Get stack struct memory ptr into a1.
+    sw a1, w3(sp)		# Save in stack frame.
+
+    lw a0, w1(sp)		# Load stack size.
+    jal mem_alloc		# Get stack memory ptr into a1.
+
+    lw t0, w3(sp)		# load stack struct ptr.
+    sw a1, stack_start(t0)	# Store stack memory ptr in stack struct.
+    sw a1, stack_tos(t0)	# Store stack tos ptr in stack struct.
+
+    lw t2, w1(sp)		# Get number words.	
+    slli t2, t2, sbts		# Multiply number words by word size to get size in bytes.
+    add t1, a1, t2		# Add stack number bytes to stack start.
+    sw t1, stack_end(t0)	# Store end into stack struct.
+
+    lw t1, w2(sp)		# Load name ptr.
+    sw t1, stack_desc(t0)	# Store name ptr.
+
+    # Restore registers and adjust stack ptr.
+    lw a0, w1(sp)
+    lw a1, w3(sp)		# Return stack struct ptr.
+    lw ra, 0(sp)
+    addi sp, sp, w4		# Collapse stack frame.
+
+    ret				# Return a1
+
+# Display invalid request, then halt.
+invalid_request:
+    la t0, invalid_str
+    sout t0	# Print invalid string.
+    dout a0	# Print number words.
+
+    halt
+
+invalid_str:     .asciz "stack_init: Invalid number of words "
+
+# Push a value onto the a stack.
+# In:  a0, ptr to a stack.
+#      a1, value to push.
+# Ret: Nothing.
+# Out: Stack full error message.
+stack_push:
+    lw t0, stack_tos(a0)	# Load stack tos.
+
+    lw t1, stack_end(a0)	# Load end of stack.
+
+    bge t0, t1, stack_full	# Check for stack full.
+
+    sw a1, 0(t0)		# Store the word.
+
+    addi t0, t0, w1		# Point to the next word.
+
+    sw t0, stack_tos(a0)	# Store the new stack ptr value.
+
+    ret
+
+# Display stack full error message, then halt.
+stack_full:
+    lw t0, stack_desc(a0)
+    sout t0			# Print stack name.
+
+    la t0, sf_str
+    sout t0			# Print stack full string.
+
+    halt
+sf_str:	.asciz	" stack: stack_push: stack full!"
+
+# Pop a value from the a stack.
+# In:  a0, ptr to a stack.
+# Ret: a1, value on stack, or
+# Out: Stack empty error message.
+stack_pop:
+    lw t0, stack_tos(a0)	# Load stack tos.
+
+    lw t1, stack_start(a0)	# Load start of stack.
+
+    # Check for stack empty.
+    ble t0, t1, sp_empty
+
+    addi t0, t0, w1n		# Point to the previous word.
+    sw t0, stack_tos(a0)	# Store the new stack ptr.
+
+    lw a1, 0(t0)		# Load the value into a1.
+
+    ret				# Return a1.
+
+# Display stack empty error message, then halt.
+sp_empty:
+    lw t0, stack_desc(a0)
+    sout t0			# Print stack name.
+
+    la t0, sp_empty_str
+    sout t0			# Print stack empty string.
+
+    halt
+sp_empty_str:	.asciz	" stack: stack_pop: stack empty!"
+
+# Check a stack name string.
+# In:  a1 = pointer to string.
+# Ret: Nothing.
+# Out: Empty string error, invald character error.
+# Note: Any length GT 0 is OK.
+#       No check for a duplicate name with another stack.
+check_name:
+    lb t0, a1		# Check for zero length.
+    beqz t0, cn_err1
+
+    add t1, x0, a1	# Init byte pointer
+    li t2, ' '
+    li t3, '~'
+
+# Loop to chegk each character.
+cn_loop_next:
+    lb t0, t1 			# Load next byte
+    beqz t0, cn_loop_done	# Done if zero char found.
+
+    blt t0, t2, cn_err2		# Check for low invalid chacacter.
+
+    bgt t0, t3, cn_err2 	# Check for high invalid character.
+
+    addi t1, t1, 1		# Point at next byte.
+    j cn_loop_next
+
+cn_loop_done:
+    ret
+
+cn_err1:
+    la t0, cn_err1_str
+    sout t0		# Print error string.
+
+    halt
+cn_err1_str: .asciz "Empty string for stack name?"
+
+cn_err2:
+    la t0, cn_err2_str
+    sout t0		# Print error string.
+
+    halt
+cn_err2_str: .asciz "Invalid character in stack name?"
+
+# Print a stack.
+# In:  a0, ptr to a stack struct.
+# Ret: Nothing.
+# Out: Text printed.
+stack_print:
+    la t0, stack_print_prefix	# Load stack print prefix.
+    sout t0			# Print prefix.
+
+    lw t0, stack_desc(a0)	# Load stack name.
+    sout t0			# Print stack name.
+
+    la t0, cr
+    sout t0			# Print cr.
+
+    lw t1, stack_start(a0)	# Load stack start.
+
+    lw t2, stack_end(a0)	# Load stack end.
+
+    la t0, stack_print_num	# Load stack print prefix.
+    sout t0			# Display prefix.
+
+    sub t3, t2, t1		# Get dif in bytes.
+    srli t3, t3, sbts		# Divide by word bytes.
+    dout t3			# Print max number items in stack.
+    la t0, cr
+    sout t0			# Print cr.
+
+    la t0, stack_print_items	# Load stack print prefix.
+    sout t0			# Display prefix.
+
+    lw t1, stack_start(a0)	# Load stack start.
+    lw t2, stack_tos(a0)	# Load stack tos.
+
+    sub t0, t2, t1		# Get bytes difference.
+    srli t0, t0, sbts		# Divide by word bytes.
+    dout t0			# Print number active items.
+    la t0, cr
+    sout t0			# Print cr.
+
+   # Loop to print eack active item.
+sp_loop_next:
+    bge t1, t2, sp_loop_end	# Exit loop if at the end of the stack.
+
+    la t0, hex_prefix
+    sout t0			# Print "0x"
+
+    lw t0, t1 			# load next item
+    hout t0			# Print item in hex.
+
+    la t0, cr
+    sout t0			# Print cr.
+
+    addi t1, t1, w1		# Point to next item.
+    j sp_loop_next
+sp_loop_end:
+
+    ret
+
+# Check a stack for an address, halt if found.
+# In:  a0, ptr to a stack struct.
+#      a1, item to check for.
+# Ret: Nothing.
+# Out: Error text printed, before halt.
+stack_check_addr:
+    lw t1, stack_start(a0)	# Load stack start.
+
+    lw t2, stack_tos(a0)	# Load stack end.
+
+    sub t3, t2, t1		# Get dif in bytes.
+    srli t3, t3, sbts		# Divide by word bytes.
+
+sca_loop_next:
+    bge t1, t2, sca_loop_end	# Exit loop if at the end of the stack.
+
+    lw t0, 0(t1) 		# load next item
+    beq t0, a1, sca_err		# Error if item found.
+
+    addi t1, t1, w1		# Point to next item
+    j sca_loop_next
+sca_loop_end:
+
+    ret
+
+sca_err:
+    la t0, stack_print_prefix
+    sout t0			# Print prefix.
+
+    lw t0, stack_desc(a0)
+    sout t0			# Print stack name.
+
+    la t0, sca_err_str
+    sout t0			# Print error text.
+
+    halt
+
+sca_err_str:		.asciz " Item already in stack"
+stack_print_prefix:	.asciz	"\nStack Name: "
+stack_print_num:	.asciz  "Max Items: "
+stack_print_items:	.asciz  "Number Items: "
+cr: .asciz "\n"
+hex_prefix: .asciz "0x"
+startstr: .asciz "\nstack new start"

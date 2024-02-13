@@ -1,0 +1,195 @@
+# Implement storage and methods for a element (as in elemented list) struct.
+
+.text
+
+       # Word sizes. # Change if a word is not 32 bits, 4 bytes.
+        .equ w1, 4
+        .equ w2, 8
+        .equ w3, 12
+
+        .equ w1n, -4
+        .equ w3n, -12
+
+# struct_element:
+        .equ element_id, 	0
+        .equ element_name, w1
+        .equ element_atomic_number,  w2
+        .equ element_words,  3
+
+# External labels:
+        .extern mem_init
+        .extern mem_alloc
+
+        .extern stack_array_new
+        .extern stack_array_alloc
+        .extern stack_array_dealloc
+        .extern stack_array_print
+
+# Global labels:
+	.global element_init
+	.global element_new
+	.global element_dealloc
+	.global element_stack_print
+	.global element_print
+
+# Initialize element storage.
+# In: a0 contains the number of items to allow for.
+element_init:
+    # Adjust stack ptr and save registers.
+    addi sp, sp, w1n
+    sw ra, 0(sp)                # Save ra an stack.
+
+    li a1, element_words   # Load number words per item.
+    la a2, element_str     # Load stack_array decription ptr.
+    jal stack_array_new # sa struct adr to a1
+
+    # Save element sa ptr.
+    la t0, element_sa_ptr
+    sw a1, 0(t0)
+
+    # Restore stack.
+    lw ra, 0(sp)
+    addi sp, sp, w1             # Restore ra from stack.
+
+    ret
+
+# Return a new element.
+# In:  a0 = Ptr to name string.
+#      a1 = Atomic number.
+# Ret: a1 = Link instance ptr.
+element_new:
+    # Adjust stack ptr and save registers.
+    addi sp, sp, w3n
+    sw ra, 0(sp)                # Save ra an stack.
+    sw s1, w1(sp)		# Save s1.
+    sw s2, w2(sp)		# Save s2.
+
+    # Save args.
+    mv s1, a0			# Save name ptr to s1.
+    mv s2, a1			# Save atomic number to s2.
+
+    # Allocate a new element instance, or stack empty.
+    la t0, element_sa_ptr
+    lw a0, 0(t0)		# Get element stack_array pointer.
+    jal stack_array_alloc	# Get a new item into a1, or stack empty.
+
+    # Load values into element instance.
+    la t0, element_id_val
+    lw t0, 0(t0)		# Load the element id value.
+    sw t0, element_id(a1)	# Set element ID.
+    sw s1, element_name(a1)	# Store element name ptr.
+    sw s2, element_atomic_number(a1)	# Store atomic number.
+
+    # Restore stack.
+    lw s2, w2(sp)		# Restore s2.
+    lw s1, w1(sp)		# Restore s1.
+    lw ra, 0(sp)
+    addi sp, sp, w3             # Restore ra from stack.
+
+    ret
+
+# Deallocate a element.
+# In: a0 contains a pointer to a element instance.
+# Ret: Nothing.
+element_dealloc:
+    # Adjust stack ptr and save registers.
+    addi sp, sp, w1n
+    sw ra, 0(sp)                # Save ra an stack.
+
+    # Check instance ID.
+    lw t0, element_id(a0)	# Load instance ID.
+    la t1, element_id_val	
+    lw t1, 0(t1)		# Load expected ID.
+    bne t0, t1, eid_err		# Error if ne.
+
+    # Deallocate.
+    mv a1, a0			# Item ptr to a1.
+    la t0, element_sa_ptr
+    lw a0, 0(t0)		# Get element stack_array pointer.
+    jal stack_array_dealloc	# Add instance back to element stack.
+
+    # Restore stack.
+    lw ra, 0(sp)
+    addi sp, sp, w1             # Restore ra from stack.
+
+    ret
+
+eid_err:
+    la t0, eid_err_str
+    sout t0			# Print error string.
+
+    halt
+
+eid_err_str:      .asciz  "Invalid instance element id"
+
+# Print the element stack.
+# In:  Nothing.
+# Ret: Nothing.
+# Out: Prints info.
+element_stack_print:
+    # Adjust stack ptr and save registers.
+    addi sp, sp, w1n
+    sw ra, 0(sp)                # Save ra an stack.
+
+    la t0, element_sa_ptr
+    lw a0, 0(t0)		# Load element stack ptr.
+
+    jal stack_array_print	# Print the stack.
+   
+    # Restore stack.
+    lw ra, 0(sp)
+    addi sp, sp, w1             # Restore ra from stack.
+
+    ret
+
+# Print an element instance.
+# In:  a0 = ptr to an element instance.
+# Ret: Nothing.
+# Out: Prints info.
+element_print:
+    # Adjust stack ptr and save registers.
+    addi sp, sp, w1n
+    sw ra, 0(sp)                # Save ra an stack.
+
+    # Check instance ID.
+    lw t0, element_id(a0)	# Load instance ID.
+    la t1, element_id_val	
+    lw t1, 0(t1)		# Load expected ID.
+    bne t0, t1, eid_err		# Error if ne.
+
+    li t0, '['
+    aout t0
+
+    la t0, el_name_str
+    sout t0
+
+    lw t0, element_name(a0)
+    sout t0
+
+    la t0, el_an_str
+    sout t0
+
+    lw t0, element_atomic_number(a0)
+    dout t0
+
+    li t0, ']'
+    aout t0
+
+    # Restore stack.
+    lw ra, 0(sp)
+    addi sp, sp, w1             # Restore ra from stack.
+
+    ret
+
+# Storage for element stack_array struct ptr.
+element_sa_ptr:   .word 0
+
+# Name for element stack_array instance.
+element_str:       .asciz  "Links"
+
+# ID to help identify a element instance.
+# A strange prime number is used for less probability of matching a random value.
+element_id_val:	.word 3517
+
+el_name_str: .asciz "Name: "
+el_an_str: .asciz ", AN: "
