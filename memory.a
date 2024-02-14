@@ -8,13 +8,14 @@
 #
 # Memory cannot be deallocated.
 
-	# Word sizes. Change if a word is not 32 bits, 4 bytes.
+# Word sizes. Change if a word is not 32 bits, 4 bytes.
 	.equ w1, 4
 
 	# Shift number bits to convert between words and bytes.
 	# Change if a word is not 32 bits, 4 bytes.
 	.equ sbts, 2
 
+# GLobal labels:
 	.global mem_init
 	.global mem_alloc
 	.global mem_left

@@ -2,7 +2,7 @@
 
 .text
 
-       # Word sizes. # Change if a word is not 32 bits, 4 bytes.
+      # Word sizes. # Change if a word is not 32 bits, 4 bytes.
         .equ w1, 4
         .equ w2, 8
         .equ w3, 12
@@ -10,7 +10,7 @@
         .equ w1n, -4
         .equ w3n, -12
 
-# struct_element:
+# Struct element:
         .equ element_id, 	0
         .equ element_name, w1
         .equ element_atomic_number,  w2
@@ -25,14 +25,26 @@
         .extern stack_array_dealloc
         .extern stack_array_print
 
+	.extern is_link
+	.extern link_val
+	.extern get_link_val
+	.extern get_link_next
+
 # Global labels:
 	.global element_init
 	.global element_new
 	.global element_dealloc
 	.global element_stack_print
 	.global element_print
+	.global element_print_list
+
+# ID to help identify a element instance.
+# A strange prime number is used for less probability of matching a random value.
+	.equ element_id_val, 3517
 
 # Initialize element storage.
+# mem_init needs to be called from main before calling this.
+#
 # In: a0 contains the number of items to allow for.
 element_init:
     # Adjust stack ptr and save registers.
@@ -74,8 +86,7 @@ element_new:
     jal stack_array_alloc	# Get a new item into a1, or stack empty.
 
     # Load values into element instance.
-    la t0, element_id_val
-    lw t0, 0(t0)		# Load the element id value.
+    li t0, element_id_val	# Load the element id value.
     sw t0, element_id(a1)	# Set element ID.
     sw s1, element_name(a1)	# Store element name ptr.
     sw s2, element_atomic_number(a1)	# Store atomic number.
@@ -98,8 +109,7 @@ element_dealloc:
 
     # Check instance ID.
     lw t0, element_id(a0)	# Load instance ID.
-    la t1, element_id_val	
-    lw t1, 0(t1)		# Load expected ID.
+    li t1, element_id_val	# Load expected ID.
     bne t0, t1, eid_err		# Error if ne.
 
     # Deallocate.
@@ -121,6 +131,41 @@ eid_err:
     halt
 
 eid_err_str:      .asciz  "Invalid instance element id"
+
+# Verify a ptr references a element instance, or halt.
+# In: a0 = Ptr to instance.
+is_element:
+    lw t0, element_id(a0)  # Load instance ID val.
+    li t1, element_id_val  # Load expected ID val.
+
+    bne t0, t1, eid_err
+    ret
+
+# Accessor to get element name.
+# In:  a0 = ptr to element instance.
+# Ret: a1 = element name.
+get_element_name:
+    # Check instance ID.
+    lw t0, element_id(a0)       # Load instance ID.
+    li t1, element_id_val       # Load expected ID.
+    bne t0, t1, eid_err		# Error if ne.
+
+    lw a1, element_name(a0)     # Load element next to return.
+
+    ret
+
+# Accessor to get element atomic_number.
+# In:  a0 = ptr to element instance.
+# Ret: a1 = element atomic_number.
+get_element_atomic_number:
+    # Check instance ID.
+    lw t0, element_id(a0)       # Load instance ID.
+    li t1, element_id_val       # Load expected ID.
+    bne t0, t1, eid_err		# Error if ne.
+
+    lw a1, element_atomic_number(a0)     # Load element next to return.
+
+    ret
 
 # Print the element stack.
 # In:  Nothing.
@@ -153,8 +198,7 @@ element_print:
 
     # Check instance ID.
     lw t0, element_id(a0)	# Load instance ID.
-    la t1, element_id_val	
-    lw t1, 0(t1)		# Load expected ID.
+    li t1, element_id_val	# Load expected ID.
     bne t0, t1, eid_err		# Error if ne.
 
     li t0, '['
@@ -181,15 +225,63 @@ element_print:
 
     ret
 
+# Print an element linked list.
+# In: a0 = ptr to a link.
+#     a1 = ptr to a string to use as a separator.
+element_print_list:
+    # Adjust stack ptr and save registers.
+    addi sp, sp, w3n
+    sw ra, 0(sp)                # Save ra an stack.
+    sw s1, w1(sp)		# Save s1.
+    sw s2, w2(sp)		# Save s2.
+
+    # Save args.
+    mv s1, a0			# Save link ptr.
+    mv s2, a1			# Save separator ptr to s2.
+
+    # Check list arg.
+    mv a0, s1			# Load link ptr
+    jal is_link			# Check link id.
+
+    li t0, 40			# Print list prefix, left paren.
+    aout t0
+
+epl_loop_next:
+    mv a0, s1			# Load link value.
+    jal get_link_val
+
+    mv a0, a1			# Print it.
+    jal element_print
+
+    mv a0, s1			# Load link next.
+    jal get_link_next
+
+    beq a1, x0, epl_loop_end
+
+    mv s1, a1			# Update link next.
+
+    sout s2			# Print separator.
+
+    j epl_loop_next
+
+epl_loop_end:
+    
+    li t0, 41			# Print list suffix, right paren.
+    aout t0
+
+    # Restore stack.
+    lw s2, w2(sp)		# Restore s2.
+    lw s1, w1(sp)		# Restore s1.
+    lw ra, 0(sp)
+    addi sp, sp, w3             # Restore ra from stack.
+
+    ret
+
 # Storage for element stack_array struct ptr.
 element_sa_ptr:   .word 0
 
 # Name for element stack_array instance.
 element_str:       .asciz  "Element"
-
-# ID to help identify a element instance.
-# A strange prime number is used for less probability of matching a random value.
-element_id_val:	.word 3517
 
 el_name_str: .asciz "Name: "
 el_an_str: .asciz ", AN: "

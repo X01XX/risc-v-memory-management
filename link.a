@@ -2,7 +2,7 @@
 
 .text
 
-       # Word sizes. # Change if a word is not 32 bits, 4 bytes.
+# Word sizes. # Change if a word is not 32 bits, 4 bytes.
         .equ w1, 4
         .equ w2, 8
         .equ w3, 12
@@ -10,7 +10,7 @@
         .equ w1n, -4
         .equ w3n, -12
 
-# struct_link:
+# Struct link:
         .equ link_id, 	0
         .equ link_next, w1
         .equ link_val,  w2
@@ -31,8 +31,17 @@
 	.global link_dealloc
 	.global link_stack_print
 	.global link_print
+	.global is_link
+	.global get_link_val
+	.global get_link_next
+
+# ID to help identify a link instance.
+# A strange prime number is used for less probability of matching a random value.
+	.equ link_id_val, 3571
 
 # Initialize link storage.
+# mem_init needs to be called from main before calling this.
+#
 # In: a0 contains the number of items to allow for.
 link_init:
     # Adjust stack ptr and save registers.
@@ -74,8 +83,7 @@ link_new:
     jal stack_array_alloc	# Get a new item into a1, or stack empty.
 
     # Load values to instance.
-    la t0, link_id_val
-    lw t0, 0(t0)		# Load the link id value.
+    li t0, link_id_val		# Load the link id value.
     sw t0, link_id(a1)		# Set link ID in returned instance.
     sw s1, link_val(a1)		# Store link value prt.
     sw s2, link_next(a1)	# Store link next prt.
@@ -98,8 +106,7 @@ link_dealloc:
 
     # Check instance ID.
     lw t0, link_id(a0)		# Load instance ID.
-    la t1, link_id_val	
-    lw t1, 0(t1)		# Load expected ID.
+    li t1, link_id_val		# Load expected ID.
     bne t0, t1, lid_err		# Error if ne.
 
     # Deallocate.
@@ -121,6 +128,41 @@ lid_err:
     halt
 
 lid_err_str:      .asciz  "Invalid instance link id"
+
+# Verify a ptr references a link instance, or halt.
+# In: a0 = Ptr to instance.
+is_link:
+    lw t0, link_id(a0)	# Load instance ID val.
+    li t1, link_id_val	# Load expected ID val.
+
+    bne t0, t1, lid_err
+    ret
+
+# Accessor to get link value.
+# In:  a0 = ptr to link instance.
+# Ret: a1 = link value.
+get_link_val:
+    # Check instance ID.
+    lw t0, link_id(a0)       	# Load instance ID.
+    li t1, link_id_val		# Load expected ID.
+    bne t0, t1, lid_err         # Error if ne.
+
+    lw a1, link_val(a0)		# Load link value to return.
+
+    ret
+
+# Accessor to get link next.
+# In:  a0 = ptr to link instance.
+# Ret: a1 = link next.
+get_link_next:
+    # Check instance ID.
+    lw t0, link_id(a0)       	# Load instance ID.
+    li t1, link_id_val		# Load expected ID.
+    bne t0, t1, lid_err         # Error if ne.
+
+    lw a1, link_next(a0)	# Load link next to return.
+
+    ret
 
 # Print the link stack.
 # In:  Nothing.
@@ -152,9 +194,8 @@ link_print:
     sw ra, 0(sp)                # Save ra an stack.
 
     # Check instance ID.
-    lw t0, link_id(a0)       # Load instance ID.
-    la t1, link_id_val
-    lw t1, 0(t1)                # Load expected ID.
+    lw t0, link_id(a0)       	# Load instance ID.
+    li t1, link_id_val		# Load expected ID.
     bne t0, t1, lid_err         # Error if ne.
 
     li t0, '['
@@ -186,10 +227,6 @@ link_sa_ptr:   .word 0
 
 # Name for link stack_array instance.
 link_str:       .asciz  "Links"
-
-# ID to help identify a link instance.
-# A strange prime number is used for less probability of matching a random value.
-link_id_val:	.word 3571
 
 lp_val_str: .asciz "Value: 0x"
 lp_nxt_str: .asciz ", Next: 0x"

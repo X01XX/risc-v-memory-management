@@ -16,6 +16,7 @@
 	.extern element_new
 	.extern element_dealloc
 	.extern element_print
+	.extern element_print_list
 	.extern element_stack_print
 
 _start:
@@ -36,28 +37,69 @@ after_init:
     jal element_stack_print
 
     # Make a new element instance.
-    la a0, h_name
-    li a1, 1
+    la a0, he_name
+    li a1, 2
     jal element_new	# New element instance to a1.
+    mv s1, a1		# Save ptr.
 
     # Print element instance.
-    mv a0, a1
+    mv a0, s1
     jal element_print
    
     # New line.
     la t0, cr
     sout t0
 
-    # Make a new link instance.
-    li a0, 5
-    li a1, 7
+    # Make a new element instance.
+    la a0, h_name
+    li a1, 1
+    jal element_new	# New element instance to a1.
+    mv s2, a1		# Save ptr.
+
+    # Print element instance.
+    mv a0, s2
+    jal element_print
+   
+    # New line.
+    la t0, cr
+    sout t0
+
+    # Make a new link instance, value is a ptr to an element.
+    mv a0, s1
+    li a1, 0
     jal link_new	# New link instance to a1.
+    mv s1, a1		# Save link ptr.
 
     # Print link instance.
-    mv a0, a1
+    mv a0, s1
     jal link_print
+
+    # New line.
+    la t0, cr
+    sout t0
+
+    # Make a new link instance, value is a ptr to an element.
+    mv a0, s2
+    mv a1, s1
+    jal link_new	# New link instance to a1.
+    mv s2, a1		# Save link ptr.
+
+    # Print link instance.
+    mv a0, s2
+    jal link_print
+
+    # New line.
+    la t0, cr
+    sout t0
+
+    # Print element list.
+    mv a0, s2		# Load list ptr.
+    la a1, sep1		# Load separator ptr.
+    jal element_print_list
 
     halt
 
+sep1: .asciz ", "
 cr: .asciz "\n"
 h_name: .asciz "Hydrogen"
+he_name: .asciz "Helium"

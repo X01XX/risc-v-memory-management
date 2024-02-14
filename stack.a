@@ -9,7 +9,7 @@
 
 .text
 
-	# Word sizes. Change if a word is not 32 bits, 4 bytes.
+# Word sizes. Change if a word is not 32 bits, 4 bytes.
 	.equ w1, 4
 	.equ w2, 8
 	.equ w3, 12
@@ -21,16 +21,17 @@
 	# Change if a word is not 32 bits, 4 bytes.
 	.equ sbts, 2
 
-#struct stack.
+# Struct stack.
 	.equ	stack_start,	0	# Ptr to start of stack.
 	.equ	stack_end,	w1	# stack_start + (sbts * number items)
 	.equ	stack_tos,	w2	# Current Top Of Stack.
 	.equ	stack_desc,	w3	# Ptr to a non-empty string, with printable characters.
 	.equ    stack_words,	4	# Number words in this struct.
 
-
+# External labels.
 	.extern mem_alloc		# Get memory from allocate-only memory store.
 
+# Global labels.
 	.global stack_new
 	.global stack_push
 	.global stack_pop
@@ -38,7 +39,8 @@
 	.global stack_check_addr
 
 # Initialize and return a stack.
-# mem_init must be run before calling this.
+# mem_init needs to be called from main before calling this.
+#
 # In:  a0, contains the number of words the stack will need to support.
 #      a1, contains a ptr to a string that will name the stack for error messages.
 # Ret: a1, a ptr to the memory allocated for the stack (header).

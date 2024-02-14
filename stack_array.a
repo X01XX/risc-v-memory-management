@@ -9,9 +9,9 @@
 #    There are two sections of code in stack_array_dealloc that can be commented out,
 #    for greater speed, but lower detection of errors.
 #
-# Its fast, but does not check for duplicate, or invalid addresses, being deallocated.
+#     It does not check for invalid addresses, being deallocated, but that can be done by the caller.
 
-	# Word sizes. Change if a word is not 32 bits, 4 bytes.
+# Word sizes. Change if a word is not 32 bits, 4 bytes.
 	.equ w1, 4
 	.equ w2, 8
 	.equ w3, 12
@@ -24,25 +24,26 @@
 	.equ w1n, -4
 	.equ w2n, -8
 	.equ w3n, -12
-	.equ w5n, -24
 	.equ w9n, -36
 
 	# Shift number bits to convert between words and bytes.
 	# Change if a word is not 32 bits, 4 bytes.
 	.equ sbts, 2
 
-#struct sa (stack-array)
+# Struct stack-array (sa):
 	.equ	sa_stack_ptr, 0		# Ptr to stack struct.
 	.equ 	sa_array_ptr, w1	# Ptr to array.
 	.equ	sa_num_items, w2	# Max number items.
 	.equ	sa_item_words, w3	# Number words per item.
 	.equ	sa_words, 4		# Number words in this struct.
 
+# Global labels:
 	.global stack_array_new
 	.global stack_array_dealloc
 	.global stack_array_alloc
 	.global stack_array_print
 
+# External labels:
 	.extern mem_alloc		# Get memory from allocate-only memory store.
 
 	.extern stack_new
@@ -52,6 +53,8 @@
 	.extern stack_check_addr
 
 # Generate a stack-array
+# mem_init needs to be called from main before calling this.
+#
 # In:  a0 - Number of items.
 #      a1 - Number of words in each item.
 #      a2 - Pointer to string description.

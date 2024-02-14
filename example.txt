@@ -4,33 +4,36 @@ rv Version 3.4 Copyright (c) 2019 by Anthony J. Dos Reis
 Stack Name: Links
 Max Items: 10
 Number Items: 10
-0x4f8
-0x504
-0x510
-0x51c
-0x528
-0x534
-0x540
-0x54c
-0x558
-0x564
+0x648
+0x654
+0x660
+0x66c
+0x678
+0x684
+0x690
+0x69c
+0x6a8
+0x6b4
 
-Stack_Array addr: 4c0
-Stack addr: 4c0
-Array addr: 4f8
+Stack_Array addr: 610
+Stack addr: 610
+Array addr: 648
 
 Stack Name: Element
 Max Items: 5
 Number Items: 5
-0x5a4
-0x5b0
-0x5bc
-0x5c8
-0x5d4
+0x6f4
+0x700
+0x70c
+0x718
+0x724
 
-Stack_Array addr: 580
-Stack addr: 580
-Array addr: 5a4
+Stack_Array addr: 6d0
+Stack addr: 6d0
+Array addr: 6f4
+[Name: Helium, AN: 2]
 [Name: Hydrogen, AN: 1]
-[Value: 0x5, Next: 0x7]
+[Value: 0x724, Next: 0x0]
+[Value: 0x718, Next: 0x6b4]
+([Name: Hydrogen, AN: 1], [Name: Helium, AN: 2])
 
