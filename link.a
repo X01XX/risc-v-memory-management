@@ -1,4 +1,6 @@
-# Implement storage and methods for a link (as in linked list) struct.
+# Implement link struct and methods.
+#
+# See link struct, below.
 
 .text
 
@@ -6,10 +8,12 @@
         .equ w1, 4
         .equ w2, 8
         .equ w3, 12
+        .equ w4, 16
 
         .equ w1n, -4
         .equ w2n, -8
         .equ w3n, -12
+        .equ w4n, -16
 
 # Struct link:
         .equ link_id, 	0
@@ -28,8 +32,6 @@
 
 # Global labels:
 	.global link_init
-	.global link_new
-	.global link_dealloc
 	.global link_stack_print
 	.global link_print
 	.global is_link
@@ -38,6 +40,7 @@
 	.global link_list_dealloc
 	.global list_new
 	.global list_push
+	.global list_pop
 
 # ID to help identify a link instance.
 # A strange prime number is used for less probability of matching a random value.
@@ -118,9 +121,79 @@ list_new:
 
     ret
 
+# Pop a value from a list.
+#
+# In:  a0 = List (link) ptr.
+# Ret: a1 = Value ptr.
+# Out: a0 not a link error. Empty list error.
+list_pop:
+    # Configure stack.
+    addi sp, sp, w4n		# Advance sp for stack frame.
+    sw ra, 0(sp)                # Save ra.
+    sw s1, w1(sp)		# Save s1.
+    sw s2, w2(sp)		# Save s2.
+    sw s3, w3(sp)		# Save s3.
+
+    # Save arg.
+    mv s1, a0			# Save link ptr.
+
+    # Check instance ID.
+    lw t0, link_id(s1)       	# Load instance ID.
+    li t1, link_id_val		# Load expected ID.
+    bne t0, t1, lid_err         # Error if ne.
+
+    # Check if empty list.
+    lw t0, link_val(s1)		# Load link 0 value.
+    beq t0, x0, lpo_err		# If equal zero, branch to error code.
+
+    # Save link 0 value to return.
+    lw s2, link_val(s1)
+
+    # Save link 1 ptr
+    lw s3, link_next(s1)
+
+    # Check for last link.
+    beq s3, x0, lpo_last
+
+    # Move info from link 1 to link 0.
+    lw t0, link_val(s3)
+    sw t0, link_val(s1)
+    lw t0, link_next(s3)
+    sw t0, link_next(s1)
+
+    # Dealloc link 1.
+    mv a0, s3
+    jal link_dealloc
+
+    j lpo_end
+
+lpo_last:
+    sw x0, link_val(s1)		# Change first link to empty list, link_next already 0.
+    
+lpo_end:
+    # Load value to return.
+    mv a1, s2
+
+    # Restore stack.
+    lw s3, w3(sp)		# Restore s3.
+    lw s2, w2(sp)		# Restore s2.
+    lw s1, w1(sp)		# Restore s1.
+    lw ra, 0(sp)		# Restore ra.
+    addi sp, sp, w4             # Restore sp.
+
+    ret
+    
+lpo_err:
+    la t0, lpo_err_str
+    sout t0
+
+    halt
+lpo_err_str:	.asciz	"\nList_pop: empty list."
+
 # Push a value onto a list of structs, sharing the same ID value.
-# In: a0 = a link ptr.
-#     a1 = value ptr. a1 = struct value, with ID in first word.
+# In:  a0 = a link ptr.
+#      a1 = value ptr. a1 = struct value, with ID in first word.
+# Out: a0 not a link error.  Value ID not equal first value in list error.
 list_push:
     # Configure stack.
     addi sp, sp, w3n		# Advance sp for stack frame.

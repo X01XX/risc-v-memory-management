@@ -1,11 +1,6 @@
-# Implement a stack
+# Implement a stack and methods.
 #
-# A stack will be a block of memory, consisting of:
-#
-# word 0: Stack start pointer, which points to the first word in the stack.
-# word 1: Stack end pointer, which points to the word nfter the last word in the stack.
-# word 2: Current top of stack pointer.
-# word 3: A pointer to a string that names the stack.
+# See stack struct, below.
 
 .text
 
@@ -296,7 +291,7 @@ sca_err:
 sca_err_str:		.asciz " Item already in stack"
 stack_print_prefix:	.asciz	"\nStack Name: "
 stack_print_num:	.asciz  "Max Items: "
-stack_print_items:	.asciz  "Number Items: "
+stack_print_items:	.asciz  "Number Available Items: "
 cr: .asciz "\n"
 hex_prefix: .asciz "0x"
 startstr: .asciz "\nstack new start"

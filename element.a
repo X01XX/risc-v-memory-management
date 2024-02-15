@@ -1,4 +1,6 @@
-# Implement storage and methods for a element (as in elemented list) struct.
+# Implement element struct and methods.
+#
+# See element struct, below.
 
 .text
 

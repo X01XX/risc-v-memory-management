@@ -8,11 +8,11 @@
 	.extern mem_init
 
         .extern link_init
-        .extern link_new
         .extern link_stack_print
         .extern link_print
         .extern list_new
         .extern list_push
+        .extern list_pop
 
 	.extern element_init
 	.extern element_new
@@ -63,7 +63,7 @@ after_init:
     jal list_push
 
     # Print list.
-    la t0, cr
+    la t0, list_str
     sout t0
     mv a0, s1		# Load list ptr.
     la a1, sep1
@@ -71,9 +71,58 @@ after_init:
     la t0, cr
     sout t0
 
+    # Pop, save, a value.
+    mv a0, s1
+    jal list_pop
+    mv s3, a1
+
+    # Print popped value.
+    la t0, popped_str
+    sout t0
+    mv a0, s3
+    jal element_print
+
+    # Dealloc popped value.
+    mv a0, s3
+    jal element_dealloc
+
+    # Print list after pop.
+    la t0, leaving_str
+    sout t0
     mv a0, s1		# Load list ptr.
+    la a1, sep1
+    jal element_list_print
+    la t0, cr
+    sout t0
+
+    # Pop, save, a value.
+    mv a0, s1
+    jal list_pop
+    mv s3, a1
+
+    # Print popped value.
+    la t0, popped_str
+    sout t0
+    mv a0, s3
+    jal element_print
+
+    # Dealloc popped value.
+    mv a0, s3
+    jal element_dealloc
+
+    # Print list after pop.
+    la t0, leaving_str
+    sout t0
+    mv a0, s1		# Load list ptr.
+    la a1, sep1
+    jal element_list_print
+
+    # Dealloc empty list
+    mv a0, s1
     jal element_list_dealloc
 
+    la t0, cr
+    sout t0
     jal link_stack_print
 
     jal element_stack_print
@@ -84,3 +133,6 @@ sep1: .asciz ", "
 cr: .asciz "\n"
 h_name: .asciz "Hydrogen"
 he_name: .asciz "Helium"
+popped_str: .asciz "\npopped: "
+leaving_str: .asciz "\nleaving "
+list_str: .asciz "\nList: "

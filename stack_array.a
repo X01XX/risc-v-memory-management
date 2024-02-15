@@ -1,4 +1,4 @@
-# Implement a stack-array
+# Implement a stack-array and methods.
 #
 # Run stack_array_new to allocate, and initialize, memory for a new stack_array.
 #
@@ -10,6 +10,8 @@
 #    for greater speed, but lower detection of errors.
 #
 #     It does not check for invalid addresses, being deallocated, but that can be done by the caller.
+#
+# See stack_array struct, below.
 
 # Word sizes. Change if a word is not 32 bits, 4 bytes.
 	.equ w1, 4
@@ -30,7 +32,7 @@
 	# Change if a word is not 32 bits, 4 bytes.
 	.equ sbts, 2
 
-# Struct stack-array (sa):
+# Struct stack_array (sa):
 	.equ	sa_stack_ptr, 0		# Ptr to stack struct.
 	.equ 	sa_array_ptr, w1	# Ptr to array.
 	.equ	sa_num_items, w2	# Max number items.
@@ -167,10 +169,6 @@ stack_array_print:
 
     mv s1, a0		# sa struct adr to s1.
 
-    # Print stack.
-    lw a0, sa_stack_ptr(s1)
-    jal stack_print
-    
     # Print stack_array address.
     la t0, sa_adr_str
     sout t0
@@ -182,6 +180,10 @@ stack_array_print:
     lw t1, sa_stack_ptr(s1)
     hout t1
 
+    # Print stack.
+    lw a0, sa_stack_ptr(s1)
+    jal stack_print
+    
     # Print array address.
     la t0, ary_adr_str
     sout t0
@@ -199,9 +201,9 @@ stack_array_print:
     ret
 
 in_sa_print: .asciz "\nIn sa print\n"
-stk_adr_str: .asciz "\nStack addr: "
-ary_adr_str: .asciz "\nArray addr: "
-sa_adr_str: .asciz "\nStack_Array addr: "
+stk_adr_str: .asciz "\nStack addr: 0x"
+ary_adr_str: .asciz "Array addr: 0x"
+sa_adr_str: .asciz "\nStack_Array addr: 0x"
 cr: .asciz "\n"
 
 # Display invalid request, then halt.
