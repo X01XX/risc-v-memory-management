@@ -65,7 +65,8 @@ stack_array_new:
     blez a0, invalid_num_items # Check for zero, or negative, number of items.
     blez a1, invalid_num_words # Check for zero, or negative, number of words.
 
-    addi sp, sp, w9n	# Adjust stack ptr.
+    # Configure stack.
+    addi sp, sp, w9n	# Advance sp for stack frame.
     sw ra, 0(sp)	# Save return addr.
     sw a0, w1(sp)	# Save number items.
     sw a1, w2(sp)	# Save number words per item.
@@ -147,20 +148,21 @@ loop:
     j loop
 
 ret:
+    # Cleanup stack.
     lw s1, w5(sp)	# Restore s1.
     lw s2, w6(sp)	# Restore s2.
     lw s3, w7(sp)	# Restore s3.
     lw a1, w8(sp)	# Load SA struct ptr to return.
-    lw ra, 0(sp)	# Restore return register.
-    addi sp, sp, w9	# Adjust stack ptr.
+    lw ra, 0(sp)	# Restore ra.
+    addi sp, sp, w9	# Restore sp.
 
     ret			# Return a1
 
 
 # Print a stack_array, ptr in a0.
 stack_array_print:
-    addi sp, sp, w2n	# Adjust stack ptr.
-    sw ra, 0(sp)	# Save return addr.
+    addi sp, sp, w2n	# Advance sp for stack frame.
+    sw ra, 0(sp)	# Save ra.
     sw s1, w1(sp)	# Save s1.
 
     mv s1, a0		# sa struct adr to s1.
@@ -189,9 +191,10 @@ stack_array_print:
     la t0, cr
     sout t0
 
-    lw ra, 0(sp)	# Restore return register.
+    # Cleanup stack.
+    lw ra, 0(sp)	# Restore ra.
     lw s1, w1(sp)	# Restore s1.
-    addi sp, sp, w2	# Adjust stack ptr.
+    addi sp, sp, w2	# Restare sp.
 
     ret
 
@@ -221,8 +224,9 @@ invalid_num_words_str:     .asciz "stack_array_new: Invalid number of words"
 # stack_array ptr in a0.
 # Return item pointer in a1.
 stack_array_alloc:
-    addi sp, sp, w1n	# Adjust stack ptr.
-    sw ra, 0(sp)	# Save return addr.
+    # Configure stack.
+    addi sp, sp, w1n	# Advance sp for stack frame.
+    sw ra, 0(sp)	# Save ra.
 
     # Load stack_address.
     lw a0, sa_stack_ptr(a0)
@@ -230,8 +234,9 @@ stack_array_alloc:
     # Get item from stack.  Stack may be empty, causing a halt.
     jal stack_pop
 
-    lw ra, 0(sp)	# Restore return register.
-    addi sp, sp, w1	# Adjust stack ptr.
+    # Cleanup stack.
+    lw ra, 0(sp)	# Restore ra.
+    addi sp, sp, w1	# Restore sp.
 
     ret
 
@@ -239,8 +244,9 @@ stack_array_alloc:
 # stack_array ptr in a0, addr to deallocate in a1.
 # Item will be zeroed out.
 stack_array_dealloc:
-    addi sp, sp, w3n	# Adjust stack ptr.
-    sw ra, 0(sp)	# Save return addr.
+    # Configure stack.
+    addi sp, sp, w3n	# Advance sp for stack frame.
+    sw ra, 0(sp)	# Save ra.
     sw s1, w1(sp)	# Save s1.
     sw s2, w2(sp)	# Save s2.
 
@@ -273,12 +279,11 @@ sad_end_loop:
     mv a1, s2
     jal stack_push
 
-    lw ra, 0(sp)	# Restore return register.
+    # Cleanup stack.
+    lw ra, 0(sp)	# Restore ra.
     lw s1, w1(sp)	# Restore s1.
     lw s2, w2(sp)	# Restore s1.
-    addi sp, sp, w3	# Adjust stack ptr.
+    addi sp, sp, w3	# Restore sp.
 
     ret
-
-# Get an address of an array item from the stack.
 

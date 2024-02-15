@@ -8,6 +8,7 @@
         .equ w3, 12
 
         .equ w1n, -4
+        .equ w2n, -8
         .equ w3n, -12
 
 # Struct link:
@@ -34,6 +35,9 @@
 	.global is_link
 	.global get_link_val
 	.global get_link_next
+	.global link_list_dealloc
+	.global list_new
+	.global list_push
 
 # ID to help identify a link instance.
 # A strange prime number is used for less probability of matching a random value.
@@ -44,9 +48,9 @@
 #
 # In: a0 contains the number of items to allow for.
 link_init:
-    # Adjust stack ptr and save registers.
-    addi sp, sp, w1n
-    sw ra, 0(sp)                # Save ra an stack.
+    # Configure stack.
+    addi sp, sp, w1n	# Advance sp for stack frame.
+    sw ra, 0(sp)        # Save ra.
 
     li a1, link_words   # Load number words per item.
     la a2, link_str     # Load stack_array decription ptr.
@@ -56,9 +60,9 @@ link_init:
     la t0, link_sa_ptr
     sw a1, 0(t0)
 
-    # Restore stack.
-    lw ra, 0(sp)
-    addi sp, sp, w1             # Restore ra from stack.
+    # Cleanup stack.
+    lw ra, 0(sp)	# Restore ra.
+    addi sp, sp, w1     # Restore sp.
 
     ret
 
@@ -67,9 +71,9 @@ link_init:
 #      a1 = Link next.
 # Ret: Link instance ptr in a1.
 link_new:
-    # Adjust stack ptr and save registers.
+    # Configure stack.
     addi sp, sp, w3n
-    sw ra, 0(sp)                # Save ra an stack.
+    sw ra, 0(sp)                # Save ra.
     sw s1, w1(sp)               # Save s1.
     sw s2, w2(sp)               # Save s2.
 
@@ -91,18 +95,103 @@ link_new:
     # Restore stack.
     lw s2, w2(sp)               # Restore s2.
     lw s1, w1(sp)               # Restore s1.
-    lw ra, 0(sp)
-    addi sp, sp, w3             # Restore ra from stack.
+    lw ra, 0(sp)		# Restore ra.
+    addi sp, sp, w3             # Restore sp.
 
     ret
+
+# Return an empty list, a link with value 0, next 0.
+# In:  Nothing.
+# Ret: a1 = empty list.
+list_new:
+    # Configure stack.
+    addi sp, sp, w1n		# Advance sp for stack frame.
+    sw ra, 0(sp)                # Save ra.
+
+    li a0, 0
+    li a1, 0
+    jal link_new
+
+    # Restore stack.
+    lw ra, 0(sp)		# Restore ra.
+    addi sp, sp, w1             # Restore sp.
+
+    ret
+
+# Push a value onto a list of structs, sharing the same ID value.
+# In: a0 = a link ptr.
+#     a1 = value ptr. a1 = struct value, with ID in first word.
+list_push:
+    # Configure stack.
+    addi sp, sp, w3n		# Advance sp for stack frame.
+    sw ra, 0(sp)                # Save ra.
+    sw s1, w1(sp)		# Save s1.
+    sw s2, w2(sp)		# Save s2.
+
+    # Save args.
+    mv s1, a0			# Save link ptr.
+    mv s2, a1			# Save value ptr.
+
+    # Check instance ID.
+    lw t0, link_id(s1)       	# Load instance ID.
+    li t1, link_id_val		# Load expected ID.
+    bne t0, t1, lid_err         # Error if ne.
+
+    # Check for empty list.
+    lw t0, link_val(s1)		# Get link value.
+    beq t0, x0, lp_empty_list
+    
+    # List is not empty.
+
+    # Check value ids is equal to other IDs in the list.
+    lw t0, link_val(s1)		# Get first link value.
+    lw t0, 0(t0)		# Get value ID.
+
+    lw t1, 0(s2)		# Get value-to-push ID.
+    bne t0, t1, lp_id_err	# Jump to error code.
+
+    # Get new link, a1
+    jal link_new
+
+    # Move first link info into the new link.
+    lw t0, link_val(s1)
+    sw t0, link_val(a1)
+    lw t0, link_next(s1)
+    sw t0, link_next(a1)
+
+    # Make first link next point to new link.
+    sw a1, link_next(s1)
+
+    # Make first link value equal new value.
+    sw s2, link_val(s1)   
+
+    j lp_end
+
+lp_empty_list:
+    sw s2, link_val(s1)		# Store value in first link.
+
+lp_end:
+    # Restore stack.
+    lw s2, w2(sp)		# Restore s2.
+    lw s1, w1(sp)		# Restore s1.
+    lw ra, 0(sp)		# Restore ra.
+    addi sp, sp, w3             # Restore sp.
+
+    ret
+lp_id_err:
+    la t0, lp_id_err_str
+    sout t0
+
+    halt
+lp_id_err_str:	.asciz	"List_push: Invalid struct ID."
 
 # Deallocate a link.
 # In: a0 contains a pointer to a link instance.
 # Ret: Nothing.
 link_dealloc:
-    # Adjust stack ptr and save registers.
-    addi sp, sp, w1n
-    sw ra, 0(sp)                # Save ra an stack.
+    # Configure stack.
+    addi sp, sp, w1n		# Advance sp for stack frame.
+    sw ra, 0(sp)                # Save ra.
 
     # Check instance ID.
     lw t0, link_id(a0)		# Load instance ID.
@@ -116,8 +205,8 @@ link_dealloc:
     jal stack_array_dealloc	# Add instance back to link stack.
 
     # Restore stack.
-    lw ra, 0(sp)
-    addi sp, sp, w1             # Restore ra from stack.
+    lw ra, 0(sp)		# Restore ra.
+    addi sp, sp, w1             # Restore sp.
 
     ret
 
@@ -169,9 +258,9 @@ get_link_next:
 # Ret: Nothing.
 # Out: Prints info.
 link_stack_print:
-    # Adjust stack ptr and save registers.
-    addi sp, sp, w1n
-    sw ra, 0(sp)                # Save ra an stack.
+    # Configure stack.
+    addi sp, sp, w1n		# Advance sp for stack frame.
+    sw ra, 0(sp)                # Save ra.
 
     la t0, link_sa_ptr
     lw a0, 0(t0)		# Load link stack ptr.
@@ -179,8 +268,8 @@ link_stack_print:
     jal stack_array_print	# Print the stack.
    
     # Restore stack.
-    lw ra, 0(sp)
-    addi sp, sp, w1             # Restore ra from stack.
+    lw ra, 0(sp)		# Restore ra.
+    addi sp, sp, w1             # Restore sp.
 
     ret
 
@@ -189,9 +278,9 @@ link_stack_print:
 # Ret: Nothing.
 # Out: Prints info.
 link_print:
-    # Adjust stack ptr and save registers.
-    addi sp, sp, w1n
-    sw ra, 0(sp)                # Save ra an stack.
+    # Configure stack.
+    addi sp, sp, w1n		# Advance sp for stack frame.
+    sw ra, 0(sp)                # Save ra.
 
     # Check instance ID.
     lw t0, link_id(a0)       	# Load instance ID.
@@ -217,8 +306,8 @@ link_print:
     aout t0
 
     # Restore stack.
-    lw ra, 0(sp)
-    addi sp, sp, w1             # Restore ra from stack.
+    lw ra, 0(sp)		# Restore ra.
+    addi sp, sp, w1             # Restore sp.
 
     ret
 
@@ -231,3 +320,43 @@ link_str:       .asciz  "Links"
 lp_val_str: .asciz "Value: 0x"
 lp_nxt_str: .asciz ", Next: 0x"
 
+# Deallocate a linked list.
+# In: a0 = ptr to a link.
+link_list_dealloc:
+    # Configure stack.
+    addi sp, sp, w3n		# Advance sp for stack frame.
+    sw ra, 0(sp)                # Save ra.
+    sw s1, w1(sp)		# Save s1.
+    sw s2, w2(sp)		# Save s2.
+
+    # Save arg.
+    mv s1, a0			# Save link ptr.
+
+    # Check instance ID.
+    lw t0, link_id(s1)       	# Load instance ID.
+    li t1, link_id_val		# Load expected ID.
+    bne t0, t1, lid_err         # Error if ne.
+
+ldl_loop_next:
+    mv s2, s1			# Save current link ptr.
+
+    lw s1, link_next(s1)	# Load link next.
+
+    mv a0, s2			# Dealloc current link.
+    jal link_dealloc
+
+    beq s1, x0, ldl_loop_end
+
+    j ldl_loop_next
+
+ldl_loop_end:
+    
+    # Restore stack.
+    lw s2, w2(sp)		# Restore s2.
+    lw s1, w1(sp)		# Restore s1.
+    lw ra, 0(sp)		# Restore ra.
+    addi sp, sp, w3             # Restore sp.
+
+    ret
+
+cr: .asciz "\n"

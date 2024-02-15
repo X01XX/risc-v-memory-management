@@ -48,11 +48,11 @@
 stack_new:
     blez a0, invalid_request 	# Check for zero, or negative, number of words.
 
-    # Adjust stack ptr and save registers.
-    addi sp, sp, w4n		# Init stack frame.
-    sw ra, 0(sp)		# Return address.
-    sw a0, w1(sp)		# Stack number words.
-    sw a1, w2(sp)		# Stack decription ptr.
+    # Configure stack.
+    addi sp, sp, w4n		# Advance sp for stack frame.
+    sw ra, 0(sp)		# Save ra.
+    sw a0, w1(sp)		# Save Stack number words.
+    sw a1, w2(sp)		# Save Stack decription ptr.
     #      w3(sp)		# Will be stack struct ptr.
 
     jal check_name		# Check stack name is OK.
@@ -76,11 +76,11 @@ stack_new:
     lw t1, w2(sp)		# Load name ptr.
     sw t1, stack_desc(t0)	# Store name ptr.
 
-    # Restore registers and adjust stack ptr.
-    lw a0, w1(sp)
+    # Restore stack.
+    lw a0, w1(sp)		# Restore a0.
     lw a1, w3(sp)		# Return stack struct ptr.
-    lw ra, 0(sp)
-    addi sp, sp, w4		# Collapse stack frame.
+    lw ra, 0(sp)		# Restore ra.
+    addi sp, sp, w4		# Restore sp.
 
     ret				# Return a1
 

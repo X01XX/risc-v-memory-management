@@ -2,38 +2,48 @@
 rv Version 3.4 Copyright (c) 2019 by Anthony J. Dos Reis
 
 Stack Name: Links
-Max Items: 10
-Number Items: 10
-0x648
-0x654
-0x660
-0x66c
-0x678
-0x684
-0x690
-0x69c
-0x6a8
-0x6b4
+Max Items: 3
+Number Items: 3
+0x7a8
+0x7b4
+0x7c0
 
-Stack_Array addr: 610
-Stack addr: 610
-Array addr: 648
+Stack_Array addr: 78c
+Stack addr: 78c
+Array addr: 7a8
 
 Stack Name: Element
-Max Items: 5
-Number Items: 5
-0x6f4
-0x700
-0x70c
-0x718
-0x724
+Max Items: 3
+Number Items: 3
+0x7f8
+0x804
+0x810
 
-Stack_Array addr: 6d0
-Stack addr: 6d0
-Array addr: 6f4
-[Name: Helium, AN: 2]
-[Name: Hydrogen, AN: 1]
-[Value: 0x724, Next: 0x0]
-[Value: 0x718, Next: 0x6b4]
+Stack_Array addr: 7dc
+Stack addr: 7dc
+Array addr: 7f8
+
 ([Name: Hydrogen, AN: 1], [Name: Helium, AN: 2])
+
+Stack Name: Links
+Max Items: 3
+Number Items: 3
+0x7a8
+0x7c0
+0x7b4
+
+Stack_Array addr: 78c
+Stack addr: 78c
+Array addr: 7a8
+
+Stack Name: Element
+Max Items: 3
+Number Items: 3
+0x7f8
+0x804
+0x810
+
+Stack_Array addr: 7dc
+Stack addr: 7dc
+Array addr: 7f8
 
