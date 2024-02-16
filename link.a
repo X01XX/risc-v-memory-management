@@ -41,6 +41,8 @@
 	.global list_new
 	.global list_push
 	.global list_pop
+	.global list_len
+	.global list_is_empty
 
 # ID to help identify a link instance.
 # A strange prime number is used for less probability of matching a random value.
@@ -143,8 +145,9 @@ list_pop:
     bne t0, t1, lid_err         # Error if ne.
 
     # Check if empty list.
-    lw t0, link_val(s1)		# Load link 0 value.
-    beq t0, x0, lpo_err		# If equal zero, branch to error code.
+    mv a0, s1
+    jal list_is_empty
+    bne a1, x0, lpo_err
 
     # Save link 0 value to return.
     lw s2, link_val(s1)
@@ -211,8 +214,9 @@ list_push:
     bne t0, t1, lid_err         # Error if ne.
 
     # Check for empty list.
-    lw t0, link_val(s1)		# Get link value.
-    beq t0, x0, lp_empty_list
+    mv a0, s1
+    jal list_is_empty
+    bne a1, x0, lp_empty_list
     
     # List is not empty.
 
@@ -347,7 +351,7 @@ link_stack_print:
     ret
 
 # Print an link instance.
-# In:  a0 = ptr to an link instance.
+# In:  a0 = ptr to a link instance.
 # Ret: Nothing.
 # Out: Prints info.
 link_print:
@@ -433,3 +437,87 @@ ldl_loop_end:
     ret
 
 cr: .asciz "\n"
+
+# Return the length of a list.
+# In:  a0 = ptr to a link instance.
+# Ret: a1 = list length.
+list_len:
+    # Configure stack.
+    addi sp, sp, w2n		# Advance sp for stack frame.
+    sw ra, 0(sp)                # Save ra.
+    sw s1, w1(sp)		# Save s1.
+
+    # Check instance ID.
+    lw t0, link_id(a0)       	# Load instance ID.
+    li t1, link_id_val		# Load expected ID.
+    bne t0, t1, lid_err         # Error if ne.
+
+    mv s1, a0			# Save link ptr.
+
+    # Check for empty list.
+    jal list_is_empty
+    bne a1, x0, ll_empty
+
+    li a1, 0			# Init counter.
+
+ll_loop_next:
+    addi a1, a1, 1		# Increment counter.
+
+    lw s1, link_next(s1)	# Load link next.
+
+    beq s1, x0, ll_end		# Exit loop in no more links.
+
+    j ll_loop_next
+
+ll_empty:
+    li a1, 0			# Load length to return.
+
+ll_end:
+    # Restore stack.
+    lw s1, w1(sp)		# Restore s1.
+    lw ra, 0(sp)		# Restore ra.
+    addi sp, sp, w2             # Restore sp.
+
+    ret
+
+# Return 1 if a list is empty, otherwise return 0.
+# In:  a0 = ptr to a link instance.
+# Ret: a1 = 1 or 0.
+list_is_empty:
+    # Configure stack.
+    addi sp, sp, w1n		# Advance sp for stack frame.
+    sw ra, 0(sp)                # Save ra.
+
+    # Check instance ID.
+    lw t0, link_id(a0)       	# Load instance ID.
+    li t1, link_id_val		# Load expected ID.
+    bne t0, t1, lid_err         # Error if ne.
+
+    li a1, 0			# Init return to false.
+
+    # Check for empty list.
+    lw t0, link_val(a0)
+    bne t0, x0, lie_end
+
+    li a1, 1			# Set return to true.
+
+    # Check for next error.
+    lw t0, link_next(a0)
+    beq t0, x0, lie_end
+    
+    la t0, next_err_str
+    sout t0
+    halt
+
+lie_end:
+    # Restore stack.
+    lw ra, 0(sp)		# Restore ra.
+    addi sp, sp, w1             # Restore sp.
+
+    ret
+next_err_str: .asciz "\nLink empty, but next non-zero"
+
+
+
+
+

@@ -13,6 +13,8 @@
         .extern list_new
         .extern list_push
         .extern list_pop
+        .extern list_len
+        .extern list_is_empty
 
 	.extern element_init
 	.extern element_new
@@ -71,27 +73,18 @@ after_init:
     la t0, cr
     sout t0
 
-    # Pop, save, a value.
+    # Display length and empty
+    la t0, len_str
+    sout t0
     mv a0, s1
-    jal list_pop
-    mv s3, a1
-
-    # Print popped value.
-    la t0, popped_str
+    jal list_len
+    dout a1
+    #
+    la t0, empty_str
     sout t0
-    mv a0, s3
-    jal element_print
-
-    # Dealloc popped value.
-    mv a0, s3
-    jal element_dealloc
-
-    # Print list after pop.
-    la t0, leaving_str
-    sout t0
-    mv a0, s1		# Load list ptr.
-    la a1, sep1
-    jal element_list_print
+    mv a0, s1
+    jal list_is_empty
+    dout a1
     la t0, cr
     sout t0
 
@@ -116,6 +109,60 @@ after_init:
     mv a0, s1		# Load list ptr.
     la a1, sep1
     jal element_list_print
+    la t0, cr
+    sout t0
+
+    # Display length and empty
+    la t0, len_str
+    sout t0
+    mv a0, s1
+    jal list_len
+    dout a1
+    #
+    la t0, empty_str
+    sout t0
+    mv a0, s1
+    jal list_is_empty
+    dout a1
+    la t0, cr
+    sout t0
+
+    # Pop, save, a value.
+    mv a0, s1
+    jal list_pop
+    mv s3, a1
+
+    # Print popped value.
+    la t0, popped_str
+    sout t0
+    mv a0, s3
+    jal element_print
+
+    # Dealloc popped value.
+    mv a0, s3
+    jal element_dealloc
+
+    # Print list after pop.
+    la t0, leaving_str
+    sout t0
+    mv a0, s1		# Load list ptr.
+    la a1, sep1
+    jal element_list_print
+
+    # Display length and empty
+    la t0, cr
+    sout t0
+    la t0, len_str
+    sout t0
+    mv a0, s1
+    jal list_len
+    dout a1
+    #
+    la t0, empty_str
+    sout t0
+    mv a0, s1
+    jal list_is_empty
+    dout a1
 
     # Dealloc empty list
     mv a0, s1
@@ -134,5 +181,7 @@ cr: .asciz "\n"
 h_name: .asciz "Hydrogen"
 he_name: .asciz "Helium"
 popped_str: .asciz "\npopped: "
-leaving_str: .asciz "\nleaving "
+leaving_str: .asciz "\n\nleaving "
 list_str: .asciz "\nList: "
+len_str: .asciz "\nLen: "
+empty_str: .asciz " Empty: "
