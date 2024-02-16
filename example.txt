@@ -1,29 +1,45 @@
 
 rv Version 3.4 Copyright (c) 2019 by Anthony J. Dos Reis
 
-Stack_Array addr: 0xa68
-Stack addr: 0xa78
+Stack_Array addr: 0xa70
+Stack addr: 0xa80
 Stack Name: Links
 Max Items: 3
 Number Available Items: 3
-0xa94
-0xaa0
-0xaac
-Array addr: 0xa94
+0xa9c
+0xaa8
+0xab4
+Array addr: 0xa9c
 
-Stack_Array addr: 0xab8
-Stack addr: 0xac8
+Stack_Array addr: 0xac0
+Stack addr: 0xad0
 Stack Name: Element
 Max Items: 3
 Number Available Items: 3
-0xae4
-0xaf0
-0xafc
-Array addr: 0xae4
+0xaec
+0xaf8
+0xb04
+Array addr: 0xaec
 
 List: ([Name: Hydrogen, AN: 1], [Name: Helium, AN: 2])
 
 Len: 2 Empty: 0
+
+Stack_Array addr: 0xa70
+Stack addr: 0xa80
+Stack Name: Links
+Max Items: 3
+Number Available Items: 1
+0xa9c
+Array addr: 0xa9c
+
+Stack_Array addr: 0xac0
+Stack addr: 0xad0
+Stack Name: Element
+Max Items: 3
+Number Available Items: 1
+0xaec
+Array addr: 0xaec
 
 popped: [Name: Hydrogen, AN: 1]
 
@@ -37,24 +53,23 @@ leaving ()
 
 Len: 0 Empty: 1
 
-Stack_Array addr: 0xa68
-Stack addr: 0xa78
+Stack_Array addr: 0xa70
+Stack addr: 0xa80
 Stack Name: Links
 Max Items: 3
 Number Available Items: 3
-0xa94
-0xaa0
-0xaac
-Array addr: 0xa94
+0xa9c
+0xaa8
+0xab4
+Array addr: 0xa9c
 
-Stack_Array addr: 0xab8
-Stack addr: 0xac8
+Stack_Array addr: 0xac0
+Stack addr: 0xad0
 Stack Name: Element
 Max Items: 3
 Number Available Items: 3
-0xae4
-0xaf0
-0xafc
-Array addr: 0xae4
-
+0xaec
+0xaf8
+0xb04
+Array addr: 0xaec
 
