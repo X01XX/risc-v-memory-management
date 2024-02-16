@@ -5,7 +5,7 @@ Like the forth-memory-management repository.
 
 I'm bringing up a VisionFive 2 SBC soon, but for now I am using the rv emulator.
 
-Define pseudo-structs (pstructs) as a series of field offsets.
+Define pseudo-structs (pstructs) as a contiguous series of named/labeled field offsets.
 
 Define an array of pstructs, then allocate and deallocate pstructs from the array.
 
