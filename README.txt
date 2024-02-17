@@ -1,5 +1,5 @@
 
-# A demonstration of memory management, in RISC-V assembler language.
+# A demonstration of memory management, in RISC-V Assembler Language.
 #
 # A stack is paired with an array, to allow:
 #
@@ -10,8 +10,6 @@
 # The stack pointer is stored in memory, not in a dedicated register.
 # This allows any number of stack-arrays, without using up registers.
 #
-# The maximum number of items in the array, and the item size, in set by you.
-#
 # Function to file:
 #
 # Allocate-only memory: memory.a
@@ -19,6 +17,8 @@
 #    You set the maximum available memory.
 #
 # Allocate-deallocate memory: stack.a, stack_array.a
+#
+#    You set the maximum number of items in the array, and the item size, serarately, for each instance.
 #
 #    An instance supports one kind of struct, so multiple instances for multiple structs.
 #
@@ -35,7 +35,7 @@ To run:
 
 ./rv main.e
 
-# rv: A RISK-V emulator, that can run on some Windows annd Linux systems.
+# rv: A RISK-V assembler language compiler emulator, that can run on some Windows and Linux systems.
 #
 # By Anthony J. Dos Reis.
 #
