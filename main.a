@@ -88,6 +88,10 @@ after_init:
     la t0, cr
     sout t0
 
+    jal link_stack_print
+
+    jal element_stack_print
+
     # Pop, save, a value.
     mv a0, s1
     jal list_pop

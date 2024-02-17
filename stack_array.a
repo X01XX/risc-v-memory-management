@@ -22,11 +22,10 @@
 	.equ w6, 24
 	.equ w7, 28
 	.equ w8, 32
-	.equ w9, 36
 	.equ w1n, -4
 	.equ w2n, -8
 	.equ w3n, -12
-	.equ w9n, -36
+	.equ w8n, -32
 
 	# Shift number bits to convert between words and bytes.
 	# Change if a word is not 32 bits, 4 bytes.
@@ -68,95 +67,95 @@ stack_array_new:
     blez a1, invalid_num_words # Check for zero, or negative, number of words.
 
     # Configure stack.
-    addi sp, sp, w9n	# Advance sp for stack frame.
+    addi sp, sp, w8n	# Advance sp for stack frame.
     sw ra, 0(sp)	# Save return addr.
-    sw a0, w1(sp)	# Save number items.
-    sw a1, w2(sp)	# Save number words per item.
-    sw a2, w3(sp)	# Save ptr to description.
-    sw s1, w5(sp)	# Save s1.
-    sw s2, w6(sp)	# Save s2.
-    sw s3, w7(sp)	# Save s3.
-    # rsv w8(sp)	# SA struct ptr to return.
+    sw s1, w1(sp)	# Save s1.
+    sw s2, w2(sp)	# Save s2.
+    sw s3, w3(sp)	# Save s3 
+    sw s4, w4(sp)	# Save s4.
+    sw s5, w5(sp)	# Save s5.
+    sw s6, w6(sp)	# Save s6.
+    sw s7, w7(sp)	# Save s7.
+
+    mv s1, a0		# Save number items.
+    mv s2, a1		# Save number words per item.
+    mv s3, a2		# Save ptr to description.
 
     # Allocate sa struct.
     li	a0, sa_words	# Load number words in SA struct.
     jal mem_alloc	# Get ptr to array into a1.
-    sw a1, w8(sp)	# Save struct ptr.
+    mv s7, a1		# Save sa struct ptr.
 
     # Add number items to struct.
-    lw s1, w8(sp)	# Load struct ptr.
-    lw t0, w1(sp)	# Load number items.
-    sw t0, sa_num_items(s1)
+    sw s1, sa_num_items(s7)
 
     # Add words per item, to struct.
-    lw s1, w8(sp)	# Load struct ptr.
-    lw t0, w2(sp)	# Load words per item.
-    sw t0, sa_item_words(s1)
+    sw s2, sa_item_words(s7)
 
     # Allocate new stack.
-    lw	a0, w1(sp)	# Load number of items.
-    lw	a1, w3(sp)	# Load ptr to description.
+    mv	a0, s1		# Load number of items.
+    mv	a1, s3		# Load ptr to description.
     jal stack_new	# Get ptr to stack in a1.
 
     # Save stack struct ptr to SA struct.
-    lw	s1, w8(sp)	# Get ptr to SA struct.
-    sw  a1, sa_stack_ptr(s1)
+    sw  a1, sa_stack_ptr(s7)
 	
     # Allocate array.
 
     # Calc array words.  Use additions to stay withn RV32I, RV64I, .. ?
-    lw	t0, w1(sp)	# Load number of items.
-    lw	t1, w2(sp)	# Load number of words in each item.
-#   mul a0, t0, t1	# Get number of words of array memory needed.
-    li s1, 0		# Init counter.
+    mv	t0, s1		# Load number of items.
+    mv	t1, s2		# Load number of words in each item.
+#   mul a0, s1, s2	# Get number of words of array memory needed.
+    li a0, 0		# Init counter.
 top_mult:
     beqz t0, end_mult	# Check for end.
-    add s1, s1, t1	# Add the number of words in one item.
+    add a0, a0, t1	# Add the number of words in one item.
     addi t0, t0, -1	# Decrement counter.
     jal top_mult	# Jump to add next item number words.
 end_mult:
-    mv a0, s1		# Load number words to pass.
     jal mem_alloc	# a0 contains number words needed.  Get memory allocation for array into a1.
 
     # Save array ptr to struct.
-    lw	t0, w8(sp)	# Get ptr to struct.
-    sw  a1, sa_array_ptr(t0)
+    sw  a1, sa_array_ptr(s7)
 	
     # Push the ptr to each array item onto the stack.
 
     # Load ptrs to stack and array.
-    lw	t0, w8(sp)		# Get ptr to sa struct.
-    lw	s1, sa_stack_ptr(t0)	# Load ptr to stack.
+    lw	s4, sa_stack_ptr(s7)	# Load ptr to stack.
 
-    lw	s2, sa_array_ptr(t0)	# Load ptr to array.
+    lw	s5, sa_array_ptr(s7)	# Load ptr to array.
 
     # Calc number bytes per item.
-    lw	 s3, w2(sp)		# Load number of words in each item.
-    slli s3, s3, sbts           # Multiply number words by word size to get size in bytes.
-    lw s4, w1(sp)		# Load number items.
+    mv	 s6, s2			# Load number of words in each item.
+    slli s6, s6, sbts           # Multiply number words by word size to get size in bytes.
 
 loop:
     # Push next item ptr to stack.  Need a0, ptr to stack, a1 value to push.
-    mv a0, s1		# Load stack ptr for call.
-    mv a1, s2		# Load array item ptr for call.
+    mv a0, s4		# Load stack ptr for call.
+    mv a1, s5		# Load array item ptr for call.
     jal stack_push
     
     # Check if done.
-    addi s4, s4, -1	# Decrement number items left.
-    beqz s4, ret	# Return if zero, no items left.
+    addi s1, s1, -1	# Decrement number items.
+    beqz s1, ret	# Return if zero, no items left.
     
-    add s2, s2, s3	# Point to next array item.
+    add s5, s5, s6	# Point to next array item.
 
     j loop
 
 ret:
+    mv a1, s7		# Load sa ptr to return.
+
     # Cleanup stack.
-    lw s1, w5(sp)	# Restore s1.
-    lw s2, w6(sp)	# Restore s2.
-    lw s3, w7(sp)	# Restore s3.
-    lw a1, w8(sp)	# Load SA struct ptr to return.
+    lw s1, w1(sp)	# Restore s1.
+    lw s2, w2(sp)	# Restore s2.
+    lw s3, w3(sp)	# Restore s3.
+    lw s4, w4(sp)	# Restore s4.
+    lw s5, w5(sp)	# Restore s5.
+    lw s6, w6(sp)	# Restore s6.
+    lw s7, w7(sp)	# Restore s7.
     lw ra, 0(sp)	# Restore ra.
-    addi sp, sp, w9	# Restore sp.
+    addi sp, sp, w8	# Restore sp.
 
     ret			# Return a1
 

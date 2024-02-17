@@ -46,34 +46,38 @@ stack_new:
     # Configure stack.
     addi sp, sp, w4n		# Advance sp for stack frame.
     sw ra, 0(sp)		# Save ra.
-    sw a0, w1(sp)		# Save Stack number words.
-    sw a1, w2(sp)		# Save Stack decription ptr.
-    #      w3(sp)		# Will be stack struct ptr.
+    sw s1, w1(sp)		# Save s1.
+    sw s2, w2(sp)		# Save s2.
+    sw s3, w3(sp)		# Will s3.
 
+    mv s1, a0			# Save stack number words.
+    mv s2, a1			# Save stack decription ptr.
+
+    mv a0, s2
     jal check_name		# Check stack name is OK.
 
-    addi a0, x0, stack_words	# Load number of stack struct words.
+    li a0, stack_words		# Load number of stack struct words.
     jal mem_alloc		# Get stack struct memory ptr into a1.
-    sw a1, w3(sp)		# Save in stack frame.
+    mv s3, a1			# Save in stack struct ptr.
 
-    lw a0, w1(sp)		# Load stack size.
+    mv a0, s1			# Load stack size.
     jal mem_alloc		# Get stack memory ptr into a1.
 
-    lw t0, w3(sp)		# load stack struct ptr.
-    sw a1, stack_start(t0)	# Store stack memory ptr in stack struct.
-    sw a1, stack_tos(t0)	# Store stack tos ptr in stack struct.
+    sw a1, stack_start(s3)	# Store stack memory ptr in stack struct.
+    sw a1, stack_tos(s3)	# Store stack tos ptr in stack struct.
 
-    lw t2, w1(sp)		# Get number words.	
-    slli t2, t2, sbts		# Multiply number words by word size to get size in bytes.
+    slli t2, s1, sbts		# Multiply number words by word size to get size in bytes.
     add t1, a1, t2		# Add stack number bytes to stack start.
-    sw t1, stack_end(t0)	# Store end into stack struct.
+    sw t1, stack_end(s3)	# Store end into stack struct.
 
-    lw t1, w2(sp)		# Load name ptr.
-    sw t1, stack_desc(t0)	# Store name ptr.
+    sw s2, stack_desc(s3)	# Store name ptr.
+
+    mv a1, s3			# Load stack struct ptr to return in a1.
 
     # Restore stack.
-    lw a0, w1(sp)		# Restore a0.
-    lw a1, w3(sp)		# Return stack struct ptr.
+    lw s3, w3(sp)		# Restore s3.
+    lw s2, w2(sp)		# Restore a0.
+    lw s1, w1(sp)		# Return stack struct ptr.
     lw ra, 0(sp)		# Restore ra.
     addi sp, sp, w4		# Restore sp.
 
@@ -151,20 +155,20 @@ sp_empty:
 sp_empty_str:	.asciz	" stack: stack_pop: stack empty!"
 
 # Check a stack name string.
-# In:  a1 = pointer to string.
+# In:  a0 = pointer to string.
 # Ret: Nothing.
 # Out: Empty string error, invald character error.
 # Note: Any length GT 0 is OK.
 #       No check for a duplicate name with another stack.
 check_name:
-    lb t0, a1		# Check for zero length.
+    lb t0, a0		# Check for zero length.
     beqz t0, cn_err1
 
-    add t1, x0, a1	# Init byte pointer
+    mv t1, a1		# Init byte pointer
     li t2, ' '
     li t3, '~'
 
-# Loop to chegk each character.
+# Loop to check each character.
 cn_loop_next:
     lb t0, t1 			# Load next byte
     beqz t0, cn_loop_done	# Done if zero char found.

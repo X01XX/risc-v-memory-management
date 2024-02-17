@@ -57,7 +57,7 @@ invalid_request:
     sout t0
     halt
 
-invalid_str:	 .asciz "mem_aloc: Invalid memory request"
+invalid_str:	 .asciz "mem_alloc: Invalid memory request"
 
 # Display out of memory error, then halt.
 out_of_memory:
