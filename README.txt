@@ -10,6 +10,11 @@
 # The stack pointer is stored in memory, not in a dedicated register.
 # This allows any number of stack-arrays, without using up registers.
 #
+# Allocation is very fast.
+#
+# Commenting out an error check, and memory zeroing, could make deallocation as fast as allocation,
+# with greater risk.  Possibly this could be done with a debug flag and conditional compiling.
+#
 # Function to file:
 #
 # Allocate-only memory: memory.a
@@ -18,7 +23,7 @@
 #
 # Allocate-deallocate memory: stack.a, stack_array.a
 #
-#    You set the maximum number of items in the array, and the item size, serarately, for each instance.
+#    You set the maximum number of items in the array, and the item size, separately, for each instance.
 #
 #    An instance supports one kind of struct, so multiple instances for multiple structs.
 #
