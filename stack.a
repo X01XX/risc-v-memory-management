@@ -103,7 +103,7 @@ stack_push:
 
     lw t1, stack_end(a0)	# Load end of stack.
 
-    bge t0, t1, stack_full	# Check for stack full.
+    bgeu t0, t1, stack_full	# Check for stack full.
 
     sw a1, 0(t0)		# Store the word.
 
@@ -134,7 +134,7 @@ stack_pop:
     lw t1, stack_start(a0)	# Load start of stack.
 
     # Check for stack empty.
-    ble t0, t1, sp_empty
+    bleu t0, t1, sp_empty
 
     addi t0, t0, w1n		# Point to the previous word.
     sw t0, stack_tos(a0)	# Store the new stack ptr.
@@ -173,9 +173,9 @@ cn_loop_next:
     lb t0, t1 			# Load next byte
     beqz t0, cn_loop_done	# Done if zero char found.
 
-    blt t0, t2, cn_err2		# Check for low invalid chacacter.
+    bltu t0, t2, cn_err2	# Check for low invalid chacacter.
 
-    bgt t0, t3, cn_err2 	# Check for high invalid character.
+    bgtu t0, t3, cn_err2 	# Check for high invalid character.
 
     addi t1, t1, 1		# Point at next byte.
     j cn_loop_next
@@ -238,7 +238,7 @@ stack_print:
 
    # Loop to print eack active item.
 sp_loop_next:
-    bge t1, t2, sp_loop_end	# Exit loop if at the end of the stack.
+    bgeu t1, t2, sp_loop_end	# Exit loop if at the end of the stack.
 
     la t0, hex_prefix
     sout t0			# Print "0x"
@@ -269,7 +269,7 @@ stack_check_addr:
     srli t3, t3, sbts		# Divide by word bytes.
 
 sca_loop_next:
-    bge t1, t2, sca_loop_end	# Exit loop if at the end of the stack.
+    bgeu t1, t2, sca_loop_end	# Exit loop if at the end of the stack.
 
     lw t0, 0(t1) 		# load next item
     beq t0, a1, sca_err		# Error if item found.

@@ -44,8 +44,8 @@ mem_alloc:
     slli t1, a0, sbts	# Multiply word number by number bytes per word.
     add t1, a1, t1	# Increment memory pointer to new free block start.
 
-    la t2, end		# Check if new free block pointer is beyond th end of memory.
-    blt t2, t1, out_of_memory
+    la t2, end		# Check if new free block pointer is beyond the end of memory.
+    bltu t2, t1, out_of_memory
 
     sw t1, 0(t0)	# Store new free block pointer.
 
@@ -89,7 +89,6 @@ mem_left:
 
     sub t3, t2, t0	# Get difference, in bytes.
     srli t3, t3, sbts	# Convert to words.
-    addi t3, t3, -1	# Subtract one for mem pointer word.
     dout t3
 
     la t3, mem_left_str2
@@ -100,6 +99,8 @@ mem_left_str1: .asciz	" Words of "
 mem_left_str2: .asciz	" allocate-only memory left."
 
 cr: .asciz "\n"
+
+#.data
 
 # Pointer to the next free memory block.
 .align w1

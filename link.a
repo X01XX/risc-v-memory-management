@@ -46,7 +46,7 @@
 
 # ID to help identify a link instance.
 # A strange prime number is used for less probability of matching a random value.
-	.equ link_id_val, 3571
+	.equ link_id_val, 1319
 
 # Initialize link storage.
 # mem_init needs to be called from main before calling this.
@@ -388,9 +388,6 @@ link_print:
 
     ret
 
-# Storage for link stack_array struct ptr.
-link_sa_ptr:   .word 0
-
 # Name for link stack_array instance.
 link_str:       .asciz  "Links"
 
@@ -517,6 +514,10 @@ lie_end:
     ret
 next_err_str: .asciz "\nLink empty, but next non-zero"
 
+#.data 
+
+# Storage for link stack_array struct ptr.
+link_sa_ptr:   .word 0
 
 
 
